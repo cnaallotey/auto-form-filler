@@ -1,6 +1,6 @@
 {
   "name": "@cnaallotey/auto-form-filler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "A lightweight library to automatically fill and submit forms based on URL query parameters",
   "main": "dist/index.js",
