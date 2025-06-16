@@ -1,3 +1,5 @@
+[![CI](https://github.com/cnaallotey/auto-form-filler/actions/workflows/ci.yml/badge.svg)](https://github.com/cnaallotey/auto-form-filler/actions/workflows/ci.yml)
+
 # Auto Form Filler
 
 A lightweight JavaScript library that automatically fills and submits forms based on URL query parameters.
