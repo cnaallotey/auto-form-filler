@@ -18,7 +18,7 @@ A lightweight JavaScript library that automatically fills and submits forms base
 ## Installation
 
 ```bash
-npm install auto-form-filler
+npm i @cnaallotey/auto-form-filler
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ npm install auto-form-filler
 ### Basic Usage
 
 ```javascript
-import { autoFillForm } from 'auto-form-filler';
+import { autoFillForm } from '@cnaallotey/auto-form-filler';
 
 // Initialize with default settings
 autoFillForm();
