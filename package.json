@@ -1,5 +1,5 @@
 {
-  "name": "auto-form-filler",
+  "name": "@cnaallotey/auto-form-filler",
   "version": "1.0.0",
   "description": "Automatically populate and submit forms based on URL query parameters",
   "main": "dist/index.js",
@@ -40,7 +40,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cnaallotey/auto-form-filler.git"
+    "url": "git+https://github.com/cnaallotey/auto-form-filler.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "jest": {
     "preset": "ts-jest",
