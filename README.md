@@ -12,6 +12,7 @@ A lightweight, zero-dependency JavaScript library that automatically fills and s
 - 🔄 **Multiple Input Types**: Supports text, email, checkbox, radio, select, and more
 - 🛠️ **Customizable**: Flexible field mappings and configuration options
 - ⚡ **Auto-Submit**: Optional automatic form submission with configurable delay
+- 🔄 **Custom Submission**: Support for both native form submission and custom submit functions
 - 🔍 **Debug Mode**: Built-in debugging tools for development
 - 📦 **Zero Dependencies**: Lightweight and fast
 - 🎨 **TypeScript Support**: Full TypeScript definitions included
@@ -66,6 +67,18 @@ autoFillForm({
   autoSubmit: true,
   submitDelay: 2000,
   debug: true,
+  // Custom submit function (optional)
+  customSubmitFunction: async (form, data) => {
+    // Example: Custom AJAX submission
+    const response = await fetch(form.action, {
+      method: form.method,
+      body: new FormData(form)
+    });
+    // Handle response
+    if (!response.ok) {
+      throw new Error('Form submission failed');
+    }
+  },
   onBeforeSubmit: (form, data) => {
     // Custom validation or processing before submit
     return true; // Return false to prevent submission
@@ -131,6 +144,9 @@ interface FormFillerConfig {
   
   /** Delay in milliseconds before auto-submitting */
   submitDelay?: number;
+  
+  /** Custom submit function to handle form submission */
+  customSubmitFunction?: (form: HTMLFormElement, data: Record<string, string>) => Promise<void> | void;
   
   /** Callback before form submission */
   onBeforeSubmit?: (form: HTMLFormElement, data: Record<string, string>) => boolean;

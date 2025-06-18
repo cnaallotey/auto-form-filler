@@ -7,14 +7,19 @@ export interface FormFillerConfig {
   onAfterSubmit?: (form: HTMLFormElement, data: Record<string, string>) => void;
   onError?: (error: Error) => void;
   debug?: boolean;
+  customSubmitFunction?: (form: HTMLFormElement, data: Record<string, string>) => Promise<void> | void;
 }
+
+type RequiredFormFillerConfig = Omit<Required<FormFillerConfig>, 'customSubmitFunction'> & {
+  customSubmitFunction?: (form: HTMLFormElement, data: Record<string, string>) => Promise<void> | void;
+};
 
 export interface FieldMapping {
   [queryParam: string]: string; // query param -> form field selector
 }
 
 export class AutoFormFiller {
-  private config: Required<FormFillerConfig>;
+  private config: RequiredFormFillerConfig;
   private defaultFieldMappings: FieldMapping = {
     email: 'input[name="email"], input[type="email"], #email',
     name: 'input[name="name"], input[name="fullname"], #name, #fullname',
@@ -36,7 +41,8 @@ export class AutoFormFiller {
       onBeforeSubmit: config.onBeforeSubmit || (() => true),
       onAfterSubmit: config.onAfterSubmit || (() => {}),
       onError: config.onError || ((error) => console.error('AutoFormFiller Error:', error)),
-      debug: config.debug ?? false
+      debug: config.debug ?? false,
+      customSubmitFunction: config.customSubmitFunction
     };
   }
 
@@ -172,8 +178,20 @@ export class AutoFormFiller {
       
       if (shouldSubmit) {
         this.log('Submitting form', data);
-        form.submit();
-        this.config.onAfterSubmit(form, data);
+        
+        if (this.config.customSubmitFunction) {
+          const result = this.config.customSubmitFunction(form, data);
+          if (result instanceof Promise) {
+            result
+              .then(() => this.config.onAfterSubmit(form, data))
+              .catch(error => this.config.onError(error));
+          } else {
+            this.config.onAfterSubmit(form, data);
+          }
+        } else {
+          form.submit();
+          this.config.onAfterSubmit(form, data);
+        }
       } else {
         this.log('Form submission cancelled by onBeforeSubmit callback');
       }
