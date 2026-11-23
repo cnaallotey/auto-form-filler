@@ -3,19 +3,36 @@
   "version": "1.1.0",
   "type": "module",
   "description": "A lightweight library to automatically fill and submit forms based on URL query parameters",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "unpkg": "dist/index.umd.js",
+  "jsdelivr": "dist/index.umd.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.esm.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && node -e \"require('fs').copyFileSync('dist/index.d.ts','dist/index.d.cts')\"",
     "dev": "rollup -c -w",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepublishOnly": "npm run build"
+    "test:package": "node scripts/check-package.cjs",
+    "site:build": "npm run build && node -e \"require('fs').copyFileSync('dist/index.umd.js','site/auto-form-filler.js')\"",
+    "prepublishOnly": "npm run build && npm test && npm run test:package"
   },
   "keywords": [
     "form",
@@ -24,11 +41,9 @@
     "automation",
     "signup"
   ],
-  "author": "Your Name",
+  "author": "Charles Nii Adotey Allotey",
   "license": "MIT",
-  "dependencies": {
-    "tslib": "^2.6.2"
-  },
+  "homepage": "https://cnaallotey.github.io/auto-form-filler/",
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-typescript": "^11.0.0",
@@ -37,6 +52,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "rollup": "^3.0.0",
     "ts-jest": "^29.0.0",
+    "tslib": "^2.6.2",
     "typescript": "^5.0.0"
   },
   "repository": {
@@ -56,5 +72,6 @@
       "src/**/*.ts",
       "!src/**/*.d.ts"
     ]
-  }
+  },
+  "sideEffects": false
 }

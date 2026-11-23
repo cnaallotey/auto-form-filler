@@ -12,6 +12,8 @@ A lightweight, zero-dependency JavaScript library that automatically fills and s
 - 🔄 **Multiple Input Types**: Supports text, email, checkbox, radio, select, and more
 - 🛠️ **Customizable**: Flexible field mappings and configuration options
 - ⚡ **Auto-Submit**: Optional automatic form submission with configurable delay
+- ⏳ **Late-Rendered Forms**: Optionally watches the DOM for forms rendered by frameworks after page load
+- ⚛️ **Framework-Friendly**: Values are set so React and similar libraries pick up the change
 - 🔄 **Custom Submission**: Support for both native form submission and custom submit functions
 - 🔍 **Debug Mode**: Built-in debugging tools for development
 - 📦 **Zero Dependencies**: Lightweight and fast
@@ -29,6 +31,15 @@ yarn add @cnaallotey/auto-form-filler
 
 # Using pnpm
 pnpm add @cnaallotey/auto-form-filler
+```
+
+Or load the UMD build from a CDN, which exposes a global `AutoFormFiller`:
+
+```html
+<script src="https://unpkg.com/@cnaallotey/auto-form-filler/dist/index.umd.js"></script>
+<script>
+  AutoFormFiller.autoFillForm({ formSelector: '#signup-form' });
+</script>
 ```
 
 ## 🚀 Quick Start
@@ -51,6 +62,22 @@ autoFillForm({
   formSelector: '#signup-form',
   autoSubmit: true
 });
+```
+
+### Forms Rendered After Page Load
+
+For single-page apps where the form appears after the page loads, turn on `observeDOM`. The library watches the DOM and retries until the form is filled, `maxDOMObserveRetries` attempts have been made, or `domObserverTimeout` milliseconds have passed.
+
+```javascript
+const filler = autoFillForm({
+  formSelector: '#signup-form',
+  observeDOM: true,
+  domObserverTimeout: 10000,  // default
+  maxDOMObserveRetries: 10    // default
+});
+
+// When the page or component that owns the form goes away:
+filler.destroy();
 ```
 
 ### Advanced Configuration
@@ -96,7 +123,7 @@ autoFillForm({
 
 ## 🔗 URL Query Parameters
 
-The library automatically maps URL query parameters to form fields. For example:
+The library automatically maps URL query parameters to form fields inside the target form (including fields attached to it with the `form` attribute). For example:
 
 ```
 https://example.com/signup?email=user@example.com&name=John%20Doe&company=Acme
@@ -106,6 +133,33 @@ This will automatically fill:
 - Email field with "user@example.com"
 - Name field with "John Doe"
 - Company field with "Acme"
+
+How values are applied:
+
+| Field type | Behaviour |
+|------------|-----------|
+| Text, email, textarea, etc. | Value is set as-is |
+| Checkbox | `true`, `1`, `yes`, `on` check it; `false`, `0`, `no`, `off` uncheck it; anything else is skipped |
+| Radio | The radio in the same group whose `value` matches is checked; skipped if none match |
+| Select | The option whose `value` matches, or whose text matches case-insensitively, is selected; skipped if none match |
+
+Skipped fields don't count as filled, so they never trigger auto-submit on their own.
+
+## 📤 Submission
+
+With `autoSubmit: true`, the form is submitted `submitDelay` ms after at least one field is filled:
+
+1. `onBeforeSubmit(form, data)` runs; returning `false` cancels the submission.
+2. If `customSubmitFunction` is set, it is called instead of a native submit. If it returns a promise, `onAfterSubmit` runs when it resolves and `onError` runs if it rejects.
+3. Otherwise the form is submitted with `form.requestSubmit()`, like a user clicking the submit button: browser validation runs and `submit` event handlers fire. If validation blocks the submission, `onError` is called instead of `onAfterSubmit`. Browsers without `requestSubmit` fall back to `form.submit()`.
+
+## 🔒 Security Considerations
+
+Anyone can create a link with query parameters for your page. With `autoSubmit` enabled, opening such a link submits your form from the visitor's browser, with their cookies and session, using values chosen by whoever made the link.
+
+- Only enable `autoSubmit` on forms where that is harmless, such as newsletter or lead-capture forms.
+- Never map query parameters to fields that change account state, such as passwords, payment details, or email changes on authenticated pages.
+- Keep validating everything on the server; pre-filled values are untrusted user input.
 
 ## 🎯 Default Field Mappings
 
@@ -127,23 +181,44 @@ The library includes smart default mappings for common fields:
 
 ### `autoFillForm(config?: FormFillerConfig): AutoFormFiller`
 
-Initializes the form filler with optional configuration.
+Creates an `AutoFormFiller` and fills the form once the DOM is ready. Same as `AutoFormFiller.init(config)`.
+
+### `new AutoFormFiller(config?: FormFillerConfig)`
+
+Creates an instance without filling anything. Call `fillForm()` yourself.
+
+### `filler.fillForm(formSelector?: string): boolean`
+
+Fills the form matching `formSelector` (or `config.formSelector`). Returns `true` if at least one field was filled.
+
+### `filler.destroy(): void`
+
+Stops the DOM observer and cancels any pending fill or auto-submit. A destroyed instance does nothing.
 
 ### Configuration Options
 
 ```typescript
 interface FormFillerConfig {
-  /** CSS selector for the form element */
+  /** CSS selector for the form element (default: 'form') */
   formSelector?: string;
   
   /** Custom field mappings */
   fieldMappings?: Record<string, string>;
   
-  /** Whether to automatically submit the form after filling */
+  /** Whether to automatically submit the form after filling (default: false) */
   autoSubmit?: boolean;
   
-  /** Delay in milliseconds before auto-submitting */
+  /** Delay in milliseconds before auto-submitting (default: 1000) */
   submitDelay?: number;
+
+  /** Watch the DOM and retry if the form or its fields aren't rendered yet (default: false) */
+  observeDOM?: boolean;
+
+  /** Stop watching the DOM after this many milliseconds (default: 10000) */
+  domObserverTimeout?: number;
+
+  /** Stop watching the DOM after this many fill attempts (default: 10) */
+  maxDOMObserveRetries?: number;
   
   /** Custom submit function to handle form submission */
   customSubmitFunction?: (form: HTMLFormElement, data: Record<string, string>) => Promise<void> | void;
@@ -170,6 +245,9 @@ npm test
 
 # Run tests with coverage
 npm run test:coverage
+
+# Check that the built package loads via require() and import()
+npm run build && npm run test:package
 ```
 
 ## 🤝 Contributing
