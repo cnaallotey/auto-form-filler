@@ -1,0 +1,197 @@
+/* Shared styles for the 1200×630 share images. Mirrors site/styles.css. */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=block");
+
+:root {
+  --bg: #FFFFFF;
+  --surface: #F6F6F8;
+  --line: #E7E7EB;
+  --line-strong: #D6D7DC;
+  --text: #121316;
+  --text-soft: #5F636B;
+  --text-faint: #8E929A;
+  --accent: #2F5BEA;
+  --accent-soft: rgba(47, 91, 234, 0.12);
+  --sky: radial-gradient(60% 80% at 15% 20%, #F2A7C3 0%, transparent 60%),
+    radial-gradient(55% 70% at 85% 15%, #9CB7F6 0%, transparent 65%),
+    radial-gradient(70% 70% at 70% 90%, #C6B3F1 0%, transparent 60%),
+    radial-gradient(60% 60% at 20% 95%, #B5DBF4 0%, transparent 60%),
+    #EDEFFA;
+  --shadow-lg: 0 2px 4px rgba(18, 19, 22, 0.05), 0 40px 80px -24px rgba(30, 40, 90, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+}
+
+body {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Geist", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The site's ruled frame */
+.rails::before,
+.rails::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.rails::before {
+  left: 48px;
+}
+
+.rails::after {
+  right: 48px;
+}
+
+.layout {
+  position: absolute;
+  inset: 0 48px;
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  align-items: stretch;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  padding: 56px 40px 52px 52px;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--text);
+  color: #fff;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+h1 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.muted {
+  color: var(--text-faint);
+}
+
+.install {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-family: "Geist Mono", monospace;
+  font-size: 18px;
+  color: var(--text-soft);
+}
+
+.install b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.panel {
+  position: relative;
+  margin: 40px 40px 40px 0;
+  border-radius: 24px;
+  background: var(--sky);
+  overflow: hidden;
+}
+
+.window {
+  position: absolute;
+  left: 44px;
+  right: -60px;
+  top: 64px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dots {
+  display: flex;
+  gap: 7px;
+}
+
+.dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.address {
+  flex: 1;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-family: "Geist Mono", monospace;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.address .dim {
+  color: var(--text-faint);
+}
+
+mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0 1px;
+}
+
+.body {
+  padding: 28px 30px 34px;
+  background: var(--surface);
+}

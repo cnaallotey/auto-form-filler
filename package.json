@@ -32,6 +32,7 @@
     "test:coverage": "jest --coverage",
     "test:package": "node scripts/check-package.cjs",
     "site:build": "npm run build && node -e \"require('fs').copyFileSync('dist/index.umd.js','site/auto-form-filler.js')\"",
+    "og": "node scripts/og/render.mjs",
     "prepublishOnly": "npm run build && npm test && npm run test:package"
   },
   "keywords": [
