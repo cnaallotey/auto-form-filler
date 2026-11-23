@@ -1,4 +1,4 @@
-import { AutoFormFiller, FormFillerConfig, autoFillForm } from '../index';
+import { AutoFormFiller, FormFillerConfig, autoFillForm, buildPrefillUrl, PERSIST_STORAGE_KEY } from '../index';
 
 function setQuery(search: string): void {
   Object.defineProperty(window, 'location', {
@@ -723,5 +723,380 @@ describe('AutoFormFiller', () => {
       expect(filler).toBeInstanceOf(AutoFormFiller);
       expect(mockInput.value).toBe('test value');
     });
+  });
+});
+
+describe('fill options', () => {
+  function setLocation(href: string): void {
+    const url = new URL(href);
+    Object.defineProperty(window, 'location', {
+      value: { href: url.href, search: url.search, pathname: url.pathname, hash: url.hash },
+      writable: true
+    });
+  }
+
+  function render(html: string): HTMLFormElement {
+    document.body.innerHTML = html;
+    return document.querySelector('form')!;
+  }
+
+  function field<T extends Element = HTMLInputElement>(selector: string): T {
+    return document.querySelector(selector) as unknown as T;
+  }
+
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    jest.restoreAllMocks();
+  });
+
+  describe('matchByName', () => {
+    it('is off by default', () => {
+      render('<form><input name="plan"></form>');
+      setLocation('https://example.com/?plan=team');
+
+      expect(new AutoFormFiller().fillForm()).toBe(false);
+      expect(field('input').value).toBe('');
+    });
+
+    it('fills a field whose name matches an unmapped parameter', () => {
+      render('<form><input name="plan"><input id="seats"></form>');
+      setLocation('https://example.com/?plan=team&seats=5');
+
+      expect(new AutoFormFiller({ matchByName: true }).fillForm()).toBe(true);
+      expect(field('[name="plan"]').value).toBe('team');
+      expect(field('#seats').value).toBe('5');
+    });
+
+    it('prefers an explicit mapping over a name match', () => {
+      render('<form><input name="plan"><input id="chosen-plan"></form>');
+      setLocation('https://example.com/?plan=team');
+
+      new AutoFormFiller({ matchByName: true, fieldMappings: { plan: '#chosen-plan' } }).fillForm();
+      expect(field('#chosen-plan').value).toBe('team');
+      expect(field('[name="plan"]').value).toBe('');
+    });
+
+    it('only matches fields that belong to the form', () => {
+      render('<input name="plan"><form></form>');
+      setLocation('https://example.com/?plan=team');
+
+      expect(new AutoFormFiller({ matchByName: true }).fillForm()).toBe(false);
+    });
+
+    it('never fills password or file fields', () => {
+      render('<form><input type="password" name="password"><input type="file" name="avatar"></form>');
+      setLocation('https://example.com/?password=hunter2&avatar=x');
+
+      expect(new AutoFormFiller({ matchByName: true }).fillForm()).toBe(false);
+      expect(field('[name="password"]').value).toBe('');
+    });
+
+    it('never fills a password field through a mapping either', () => {
+      render('<form><input type="password" id="pw"></form>');
+      setLocation('https://example.com/?pw=hunter2');
+
+      expect(new AutoFormFiller({ fieldMappings: { pw: '#pw' } }).fillForm()).toBe(false);
+      expect(field('#pw').value).toBe('');
+    });
+  });
+
+  describe('cleanUrl', () => {
+    it('removes the parameters that filled a field and keeps the rest', () => {
+      render('<form><input name="email"></form>');
+      setLocation('https://example.com/signup?email=a%40b.c&ref=hn#top');
+      const replaceState = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+
+      new AutoFormFiller({ cleanUrl: true }).fillForm();
+
+      expect(field('input').value).toBe('a@b.c');
+      expect(replaceState).toHaveBeenCalledWith(window.history.state, '', '/signup?ref=hn#top');
+    });
+
+    it('leaves the URL alone when it is off', () => {
+      render('<form><input name="email"></form>');
+      setLocation('https://example.com/signup?email=a%40b.c');
+      const replaceState = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+
+      new AutoFormFiller().fillForm();
+      expect(replaceState).not.toHaveBeenCalled();
+    });
+
+    it('keeps parameters that were skipped', () => {
+      render('<form><select name="role"><option value="dev">Dev</option></select></form>');
+      setLocation('https://example.com/?role=ceo');
+      const replaceState = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+
+      new AutoFormFiller({ cleanUrl: true, matchByName: true }).fillForm();
+      expect(replaceState).not.toHaveBeenCalled();
+    });
+
+    it('removes the prefixed name when a prefix is set', () => {
+      render('<form><input name="email"></form>');
+      setLocation('https://example.com/?ff_email=a%40b.c&page=2');
+      const replaceState = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+
+      new AutoFormFiller({ cleanUrl: true, prefix: 'ff_' }).fillForm();
+      expect(replaceState).toHaveBeenCalledWith(window.history.state, '', '/?page=2');
+    });
+  });
+
+  describe('persist', () => {
+    it('remembers matching parameters and fills them on a later page', () => {
+      document.body.innerHTML = '<p>Blog post</p>';
+      setLocation('https://example.com/blog?utm_source=newsletter&utm_campaign=spring&q=forms');
+      expect(new AutoFormFiller({ persist: ['utm_*'] }).fillForm()).toBe(false);
+
+      const stored = JSON.parse(window.sessionStorage.getItem(PERSIST_STORAGE_KEY)!);
+      expect(stored).toEqual({ utm_source: ['newsletter'], utm_campaign: ['spring'] });
+
+      render('<form><input name="utm_source" type="hidden"><input name="utm_campaign" type="hidden"></form>');
+      setLocation('https://example.com/signup');
+      expect(new AutoFormFiller({ persist: ['utm_*'] }).fillForm()).toBe(true);
+      expect(field('[name="utm_source"]').value).toBe('newsletter');
+      expect(field('[name="utm_campaign"]').value).toBe('spring');
+    });
+
+    it('prefers a value in the current URL over a remembered one', () => {
+      window.sessionStorage.setItem(PERSIST_STORAGE_KEY, JSON.stringify({ utm_source: ['old'] }));
+      render('<form><input name="utm_source"></form>');
+      setLocation('https://example.com/?utm_source=new');
+
+      new AutoFormFiller({ persist: ['utm_*'] }).fillForm();
+      expect(field('input').value).toBe('new');
+    });
+
+    it('ignores remembered values when persist is off', () => {
+      window.sessionStorage.setItem(PERSIST_STORAGE_KEY, JSON.stringify({ utm_source: ['old'] }));
+      render('<form><input name="utm_source"></form>');
+      setLocation('https://example.com/');
+
+      expect(new AutoFormFiller().fillForm()).toBe(false);
+    });
+
+    it('can use localStorage', () => {
+      document.body.innerHTML = '';
+      setLocation('https://example.com/?utm_medium=email');
+      new AutoFormFiller({ persist: ['utm_medium'], persistStorage: 'local' }).fillForm();
+
+      expect(JSON.parse(window.localStorage.getItem(PERSIST_STORAGE_KEY)!)).toEqual({ utm_medium: ['email'] });
+      expect(window.sessionStorage.getItem(PERSIST_STORAGE_KEY)).toBeNull();
+    });
+
+    it('forgets remembered values with clearPersisted()', () => {
+      setLocation('https://example.com/?utm_source=x');
+      const filler = new AutoFormFiller({ persist: ['utm_*'] });
+      filler.fillForm();
+      filler.clearPersisted();
+
+      expect(window.sessionStorage.getItem(PERSIST_STORAGE_KEY)).toBeNull();
+    });
+
+    it('ignores corrupted storage', () => {
+      window.sessionStorage.setItem(PERSIST_STORAGE_KEY, '{not json');
+      render('<form><input name="utm_source"></form>');
+      setLocation('https://example.com/');
+      const onError = jest.fn();
+
+      expect(new AutoFormFiller({ persist: ['utm_*'], onError }).fillForm()).toBe(false);
+      expect(onError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('overwrite: false', () => {
+    it('skips text fields that already have a value and fills empty ones', () => {
+      render('<form><input name="email"><input name="firstname"></form>');
+      field('[name="email"]').value = 'typed@me.com';
+      setLocation('https://example.com/?email=a%40b.c&firstname=Ada');
+
+      new AutoFormFiller({ overwrite: false }).fillForm();
+      expect(field('[name="email"]').value).toBe('typed@me.com');
+      expect(field('[name="firstname"]').value).toBe('Ada');
+    });
+
+    it('skips a select the visitor changed and fills one left at its default', () => {
+      render(`<form>
+        <select name="role"><option value="">Pick</option><option value="dev">Dev</option><option value="pm">PM</option></select>
+        <select name="team"><option value="">Pick</option><option value="a">A</option></select>
+      </form>`);
+      field<HTMLSelectElement>('[name="role"]').value = 'pm';
+      setLocation('https://example.com/?role=dev&team=a');
+
+      new AutoFormFiller({ overwrite: false, matchByName: true }).fillForm();
+      expect(field<HTMLSelectElement>('[name="role"]').value).toBe('pm');
+      expect(field<HTMLSelectElement>('[name="team"]').value).toBe('a');
+    });
+
+    it('skips a checkbox the visitor changed', () => {
+      render('<form><input type="checkbox" name="newsletter"></form>');
+      field('input').checked = true;
+      setLocation('https://example.com/?newsletter=no');
+
+      new AutoFormFiller({ overwrite: false, matchByName: true }).fillForm();
+      expect(field('input').checked).toBe(true);
+    });
+
+    it('overwrites by default', () => {
+      render('<form><input name="email"></form>');
+      field('input').value = 'typed@me.com';
+      setLocation('https://example.com/?email=a%40b.c');
+
+      new AutoFormFiller().fillForm();
+      expect(field('input').value).toBe('a@b.c');
+    });
+  });
+
+  describe('repeated parameters', () => {
+    it('checks every checkbox in a group whose value is given', () => {
+      render(`<form>
+        <input type="checkbox" name="topics" value="design" checked>
+        <input type="checkbox" name="topics" value="code">
+        <input type="checkbox" name="topics" value="data">
+      </form>`);
+      setLocation('https://example.com/?topics=code&topics=data');
+      const onBeforeSubmit = jest.fn().mockReturnValue(false);
+      jest.useFakeTimers();
+
+      new AutoFormFiller({ matchByName: true, autoSubmit: true, onBeforeSubmit }).fillForm();
+      jest.advanceTimersByTime(1000);
+      jest.useRealTimers();
+
+      const checked = Array.from(document.querySelectorAll<HTMLInputElement>('input:checked')).map(i => i.value);
+      expect(checked).toEqual(['code', 'data']);
+      expect(onBeforeSubmit).toHaveBeenCalledWith(expect.anything(), { topics: 'code,data' });
+    });
+
+    it('skips a checkbox group when no value matches', () => {
+      render(`<form>
+        <input type="checkbox" name="topics" value="design" checked>
+        <input type="checkbox" name="topics" value="code">
+      </form>`);
+      setLocation('https://example.com/?topics=music');
+
+      expect(new AutoFormFiller({ matchByName: true }).fillForm()).toBe(false);
+      expect(field('[value="design"]').checked).toBe(true);
+    });
+
+    it('selects every matching option in a multi-select', () => {
+      render(`<form><select name="langs" multiple>
+        <option value="js">JavaScript</option><option value="py">Python</option><option value="go">Go</option>
+      </select></form>`);
+      setLocation('https://example.com/?langs=js&langs=Go');
+
+      new AutoFormFiller({ matchByName: true }).fillForm();
+      const selected = Array.from(field<HTMLSelectElement>('select').selectedOptions).map(o => o.value);
+      expect(selected).toEqual(['js', 'go']);
+    });
+
+    it('uses the last value for a single field', () => {
+      render('<form><input name="email"></form>');
+      setLocation('https://example.com/?email=first%40x.com&email=last%40x.com');
+
+      new AutoFormFiller().fillForm();
+      expect(field('input').value).toBe('last@x.com');
+    });
+
+    it('checks a single checkbox when the value matches its own value', () => {
+      render('<form><input type="checkbox" name="terms" value="accepted"></form>');
+      setLocation('https://example.com/?terms=accepted');
+
+      expect(new AutoFormFiller({ matchByName: true }).fillForm()).toBe(true);
+      expect(field('input').checked).toBe(true);
+    });
+  });
+
+  describe('prefix', () => {
+    it('only reads parameters with the prefix', () => {
+      render('<form><input name="email"><input name="page"></form>');
+      setLocation('https://example.com/?ff_email=a%40b.c&page=2&email=ignored%40x.com');
+
+      new AutoFormFiller({ prefix: 'ff_', matchByName: true }).fillForm();
+      expect(field('[name="email"]').value).toBe('a@b.c');
+      expect(field('[name="page"]').value).toBe('');
+    });
+  });
+
+  describe('transform', () => {
+    it('changes values before filling', () => {
+      render('<form><input name="email"><input name="phone"></form>');
+      setLocation('https://example.com/?email=%20Ada%40Example.COM%20&phone=%2B1%20(555)%20010-0000');
+
+      new AutoFormFiller({
+        transform: {
+          email: v => v.trim().toLowerCase(),
+          phone: v => v.replace(/[^\d+]/g, '')
+        }
+      }).fillForm();
+      expect(field('[name="email"]').value).toBe('ada@example.com');
+      expect(field('[name="phone"]').value).toBe('+15550100000');
+    });
+
+    it('reports a transform that throws and still fills other fields', () => {
+      render('<form><input name="email"><input name="firstname"></form>');
+      setLocation('https://example.com/?email=x&firstname=Ada');
+      const onError = jest.fn();
+
+      new AutoFormFiller({
+        onError,
+        transform: { email: () => { throw new Error('bad email'); } }
+      }).fillForm();
+      expect(onError).toHaveBeenCalledWith(new Error('bad email'));
+      expect(field('[name="email"]').value).toBe('');
+      expect(field('[name="firstname"]').value).toBe('Ada');
+    });
+  });
+
+  describe('allow', () => {
+    it('only fills allowed parameters', () => {
+      render('<form><input name="email"><input name="plan"><input name="utm_source"></form>');
+      setLocation('https://example.com/?email=a%40b.c&plan=team&utm_source=x');
+
+      new AutoFormFiller({ matchByName: true, allow: ['email', 'utm_*'] }).fillForm();
+      expect(field('[name="email"]').value).toBe('a@b.c');
+      expect(field('[name="utm_source"]').value).toBe('x');
+      expect(field('[name="plan"]').value).toBe('');
+    });
+
+    it('does not remember parameters outside the allow list', () => {
+      setLocation('https://example.com/?utm_source=x&utm_term=y');
+      new AutoFormFiller({ persist: ['utm_*'], allow: ['utm_source'] }).fillForm();
+
+      expect(JSON.parse(window.sessionStorage.getItem(PERSIST_STORAGE_KEY)!)).toEqual({ utm_source: ['x'] });
+    });
+  });
+});
+
+describe('buildPrefillUrl', () => {
+  it('adds encoded values to an absolute URL, keeping its query and hash', () => {
+    expect(buildPrefillUrl('https://example.com/signup?ref=hn#form', { email: 'ada@example.com', name: 'Ada Lovelace' }))
+      .toBe('https://example.com/signup?ref=hn&email=ada%40example.com&name=Ada+Lovelace#form');
+  });
+
+  it('works with relative URLs', () => {
+    expect(buildPrefillUrl('/signup', { plan: 'team' })).toBe('/signup?plan=team');
+    expect(buildPrefillUrl('signup', { plan: 'team' })).toBe('signup?plan=team');
+  });
+
+  it('repeats arrays, stringifies numbers and booleans, and drops null', () => {
+    expect(buildPrefillUrl('/s?plan=solo', { topics: ['code', 'data'], seats: 5, newsletter: true, plan: null }))
+      .toBe('/s?topics=code&topics=data&seats=5&newsletter=true');
+  });
+
+  it('adds a prefix', () => {
+    expect(buildPrefillUrl('/s', { email: 'a@b.c' }, { prefix: 'ff_' })).toBe('/s?ff_email=a%40b.c');
+  });
+
+  it('produces values the library reads back exactly', () => {
+    const tricky = '100% off & free, "quoted" + more';
+    const url = buildPrefillUrl('https://example.com/', { message: tricky });
+    document.body.innerHTML = '<form><textarea name="message"></textarea></form>';
+    Object.defineProperty(window, 'location', { value: { search: new URL(url).search }, writable: true });
+
+    new AutoFormFiller({ matchByName: true }).fillForm();
+    expect((document.querySelector('textarea') as HTMLTextAreaElement).value).toBe(tricky);
   });
 });

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `matchByName` option fills fields whose `name` or `id` matches a parameter that has no mapping
+- `cleanUrl` option removes the parameters that filled a field from the address bar
+- `persist` and `persistStorage` options remember parameters such as `utm_*` across pages, and `clearPersisted()` forgets them
+- `overwrite: false` leaves fields that already have a value alone
+- Repeated parameters fill checkbox groups and multi-selects with every value
+- `prefix` option only reads parameters with a given prefix, such as `ff_`
+- `transform` option changes values before they're filled
+- `allow` option limits which parameters can fill fields
+- `buildPrefillUrl()` builds correctly encoded prefill links
+
+### Changed
+- A single checkbox is also checked when the value equals its own `value` attribute
+- Password, file and button inputs are never filled, even when mapped
+
 ## [1.2.0] - 2026-11-23
 
 ### Added

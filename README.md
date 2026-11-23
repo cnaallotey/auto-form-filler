@@ -11,6 +11,10 @@ A lightweight, zero-dependency JavaScript library that automatically fills and s
 - 🎯 **Smart Form Filling**: Automatically fills form fields based on URL query parameters
 - 🔄 **Multiple Input Types**: Supports text, email, checkbox, radio, select, and more
 - 🛠️ **Customizable**: Flexible field mappings and configuration options
+- 🏷️ **Match by Name**: Optionally fill any field whose `name` or `id` matches a parameter, with no mappings
+- 🧭 **Campaign Tracking**: Remember UTM and other parameters across pages until the visitor reaches the form
+- 🧹 **Clean URLs**: Optionally remove filled values from the address bar
+- 🔗 **Link Builder**: `buildPrefillUrl()` makes correctly encoded links
 - ⚡ **Auto-Submit**: Optional automatic form submission with configurable delay
 - ⏳ **Late-Rendered Forms**: Optionally watches the DOM for forms rendered by frameworks after page load
 - ⚛️ **Framework-Friendly**: Values are set so React and similar libraries pick up the change
@@ -139,11 +143,56 @@ How values are applied:
 | Field type | Behaviour |
 |------------|-----------|
 | Text, email, textarea, etc. | Value is set as-is |
-| Checkbox | `true`, `1`, `yes`, `on` check it; `false`, `0`, `no`, `off` uncheck it; anything else is skipped |
+| Checkbox | `true`, `1`, `yes`, `on` check it; `false`, `0`, `no`, `off` uncheck it; its own `value` checks it; anything else is skipped |
+| Checkboxes sharing a name | Repeat the parameter (`?topics=code&topics=data`); matching boxes are checked, the rest unchecked |
 | Radio | The radio in the same group whose `value` matches is checked; skipped if none match |
 | Select | The option whose `value` matches, or whose text matches case-insensitively, is selected; skipped if none match |
+| Multi-select | Repeat the parameter; every matching option is selected |
+| Password, file, button | Never filled |
 
-Skipped fields don't count as filled, so they never trigger auto-submit on their own.
+Skipped fields don't count as filled, so they never trigger auto-submit on their own. When a parameter repeats, checkbox groups and multi-selects use every value and other fields use the last one.
+
+### Matching, filtering and cleaning up
+
+```javascript
+autoFillForm({
+  matchByName: true,              // ?plan=team fills <input name="plan"> without a mapping
+  allow: ['email', 'plan', 'utm_*'], // only these parameters can fill fields (* matches anything)
+  prefix: 'ff_',                  // only read ?ff_email=..., ?ff_plan=...
+  transform: {
+    email: (value) => value.trim().toLowerCase(),
+  },
+  overwrite: false,               // leave fields that already have a value alone
+  cleanUrl: true,                 // remove filled parameters from the address bar
+});
+```
+
+### Keeping campaign values across pages
+
+Run the library on every page with `persist`. Matching parameters are saved on any page and filled on the page that has the form. The URL wins over a saved value.
+
+```javascript
+const filler = autoFillForm({
+  formSelector: '#signup-form',
+  persist: ['utm_*', 'ref'],
+  persistStorage: 'session', // or 'local' to keep them across visits
+});
+
+// After a successful signup
+filler.clearPersisted();
+```
+
+### Building links
+
+```javascript
+import { buildPrefillUrl } from '@cnaallotey/auto-form-filler';
+
+buildPrefillUrl('https://example.com/signup', {
+  email: 'ada@example.com',
+  topics: ['code', 'data'],
+});
+// https://example.com/signup?email=ada%40example.com&topics=code&topics=data
+```
 
 ## 📤 Submission
 
@@ -158,7 +207,8 @@ With `autoSubmit: true`, the form is submitted `submitDelay` ms after at least o
 Anyone can create a link with query parameters for your page. With `autoSubmit` enabled, opening such a link submits your form from the visitor's browser, with their cookies and session, using values chosen by whoever made the link.
 
 - Only enable `autoSubmit` on forms where that is harmless, such as newsletter or lead-capture forms.
-- Never map query parameters to fields that change account state, such as passwords, payment details, or email changes on authenticated pages.
+- Never map query parameters to fields that change account state, such as payment details or email changes on authenticated pages. Password and file inputs are never filled. With `matchByName`, use `allow` to list exactly which parameters may fill fields.
+- Use `cleanUrl: true` so personal data like an email doesn't stay in the address bar, browser history or copied links.
 - Keep validating everything on the server; pre-filled values are untrusted user input.
 
 ## 🎯 Default Field Mappings
@@ -194,6 +244,14 @@ Fills the form matching `formSelector` (or `config.formSelector`). Returns `true
 ### `filler.destroy(): void`
 
 Stops the DOM observer and cancels any pending fill or auto-submit. A destroyed instance does nothing.
+
+### `filler.clearPersisted(): void`
+
+Forgets the values saved with `persist`.
+
+### `buildPrefillUrl(url: string, data: PrefillData, options?: { prefix?: string }): string`
+
+Adds values to a URL's query string, encoded so the library reads them back exactly. Arrays become repeated parameters and `null`/`undefined` remove a parameter. Keeps the existing query string and hash, and works with relative URLs.
 
 ### Configuration Options
 
@@ -234,6 +292,30 @@ interface FormFillerConfig {
   
   /** Enable debug mode */
   debug?: boolean;
+
+  /** Fill fields whose name or id matches an unmapped parameter (default: false) */
+  matchByName?: boolean;
+
+  /** Only these parameters may fill fields; `*` matches anything (default: all) */
+  allow?: string[];
+
+  /** Only read parameters with this prefix, e.g. 'ff_' (default: '') */
+  prefix?: string;
+
+  /** Change values before they're filled, keyed by parameter name */
+  transform?: Record<string, (value: string) => string>;
+
+  /** Fill fields that already have a value (default: true) */
+  overwrite?: boolean;
+
+  /** Remove filled parameters from the address bar (default: false) */
+  cleanUrl?: boolean;
+
+  /** Parameters to remember across pages, e.g. ['utm_*'] (default: []) */
+  persist?: string[];
+
+  /** Where remembered parameters are kept (default: 'session') */
+  persistStorage?: 'session' | 'local';
 }
 ```
 
