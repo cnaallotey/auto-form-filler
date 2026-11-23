@@ -4,6 +4,8 @@
 
 # Auto Form Filler
 
+**[Website and live demo](https://cnaallotey.github.io/auto-form-filler/)** | **[Documentation](https://cnaallotey.github.io/auto-form-filler/docs/)**
+
 A lightweight, zero-dependency JavaScript library that automatically fills and submits forms based on URL query parameters. Perfect for marketing campaigns, lead generation, and form automation.
 
 ## ✨ Features
