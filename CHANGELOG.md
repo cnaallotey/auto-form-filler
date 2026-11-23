@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `matchByName` option fills fields whose `name` or `id` matches a parameter that has no mapping
+- `cleanUrl` option removes the parameters that filled a field from the address bar
+- `persist` and `persistStorage` options remember parameters such as `utm_*` across pages, and `clearPersisted()` forgets them
+- `overwrite: false` leaves fields that already have a value alone
+- Repeated parameters fill checkbox groups and multi-selects with every value
+- `prefix` option only reads parameters with a given prefix, such as `ff_`
+- `transform` option changes values before they're filled
+- `allow` option limits which parameters can fill fields
+- `buildPrefillUrl()` builds correctly encoded prefill links
+
+### Changed
+- A single checkbox is also checked when the value equals its own `value` attribute
+- Password, file and button inputs are never filled, even when mapped
+
+## [1.2.0] - 2026-11-23
+
+### Added
 - `observeDOM`, `domObserverTimeout` and `maxDOMObserveRetries` options to fill forms that render after page load
 - `destroy()` method to cancel a pending fill, DOM observation and auto-submit
 - `exports` map with separate ESM and CommonJS entry points and type declarations

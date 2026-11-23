@@ -54,6 +54,8 @@
             <li><a href="#field-mappings">Field mappings</a></li>
             <li><a href="#options">Options</a></li>
             <li><a href="#methods">Methods</a></li>
+            <li><a href="#building-links">Building links</a></li>
+            <li><a href="#persist">Keeping values across pages</a></li>
             <li><a href="#auto-submit">Auto-submit</a></li>
             <li><a href="#late-forms">Forms that render late</a></li>
             <li><a href="#frameworks">React and other frameworks</a></li>
@@ -108,7 +110,8 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
           Each query parameter is looked up in the <a href="#field-mappings">field mappings</a>. If it has
           a mapping, the first matching field <em>inside the target form</em> is filled. Fields outside
           the form are only used when they’re attached to it with the <code>form</code> attribute.
-          Parameters without a mapping are ignored.
+          Parameters without a mapping are ignored, unless you turn on
+          <a href="#match-by-name"><code>matchByName</code></a>.
         </p>
         <div class="table-wrap">
           <table>
@@ -117,9 +120,12 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
             </thead>
             <tbody>
               <tr><td>Text, email, tel, number, textarea and other inputs</td><td>The value is set as written.</td></tr>
-              <tr><td>Checkbox</td><td><code>true</code>, <code>1</code>, <code>yes</code> or <code>on</code> checks it. <code>false</code>, <code>0</code>, <code>no</code> or <code>off</code> unchecks it. Case doesn’t matter. Any other value is skipped.</td></tr>
+              <tr><td>Checkbox</td><td><code>true</code>, <code>1</code>, <code>yes</code> or <code>on</code> checks it. <code>false</code>, <code>0</code>, <code>no</code> or <code>off</code> unchecks it. Case doesn’t matter. A value equal to the checkbox’s own <code>value</code> attribute also checks it. Anything else is skipped.</td></tr>
+              <tr><td>Checkboxes sharing a name</td><td>Repeat the parameter, as in <code>?topics=code&amp;topics=data</code>. The checkboxes with those values are checked and the rest of the group is unchecked. If none match, the group is left alone.</td></tr>
               <tr><td>Radio button</td><td>The radio in the same group whose <code>value</code> matches exactly is checked. If none match, it’s skipped.</td></tr>
               <tr><td>Select</td><td>The option whose <code>value</code> matches exactly, or whose label matches ignoring case, is selected. If none match, it’s skipped.</td></tr>
+              <tr><td>Multi-select</td><td>Repeat the parameter. Every option that matches one of the values is selected, the same way as a single select.</td></tr>
+              <tr><td>Password, file and button inputs</td><td>Never filled.</td></tr>
             </tbody>
           </table>
         </div>
@@ -128,7 +134,15 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
           your own listeners and frameworks see the new value. Skipped fields don’t count as filled
           and never trigger <a href="#auto-submit">auto-submit</a> on their own.
         </p>
-        <p>If a parameter appears more than once, the last value is used.</p>
+        <p>
+          If a parameter appears more than once, checkbox groups and multi-selects use every value.
+          Other fields use the last one.
+        </p>
+        <p>
+          With <code>overwrite: false</code>, fields that already have a value are left alone, such as
+          ones the browser autofilled or a draft the page restored. A text field counts as filled when it
+          isn’t empty. Checkboxes, radios and selects count as filled when they differ from the page’s HTML.
+        </p>
       </section>
 
       <section id="field-mappings">
@@ -168,6 +182,33 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
     country: 'select[name="country"]',
     message: 'textarea[name="message"]',
     email: '#work-email',                  <span class="tok-c">// replaces the built-in email mapping</span>
+  },
+});</code></pre></div>
+
+        <h3 id="match-by-name">Matching by name<span class="since">New in 1.3.0</span></h3>
+        <p>
+          With <code>matchByName: true</code>, a parameter without a mapping fills the field in the form
+          whose <code>name</code>, or failing that <code>id</code>, is the same as the parameter. Most forms
+          then need no mappings at all. Mappings still win when both exist.
+        </p>
+        <div class="code"><pre><code><span class="tok-c">// ?plan=team&amp;seats=5 fills &lt;input name="plan"&gt; and &lt;input id="seats"&gt;</span>
+autoFillForm({ matchByName: true });</code></pre></div>
+        <p>
+          To limit which parameters can fill fields, list them in <code>allow</code>. Use <code>*</code> to
+          match any characters. To keep the library’s parameters apart from your app’s own, set a
+          <code>prefix</code>: with <code>prefix: 'ff_'</code> only <code>?ff_email=…</code> is read, and it
+          fills the <code>email</code> field.
+        </p>
+        <div class="code"><pre><code>autoFillForm({
+  matchByName: true,
+  allow: ['email', 'plan', 'utm_*'],
+  prefix: 'ff_',
+});</code></pre></div>
+        <p>To clean up a value before it’s filled, give a function for that parameter in <code>transform</code>:</p>
+        <div class="code"><pre><code>autoFillForm({
+  transform: {
+    email: (value) =&gt; value.trim().toLowerCase(),
+    phone: (value) =&gt; value.replace(/[^\d+]/g, ''),
   },
 });</code></pre></div>
       </section>
@@ -237,6 +278,46 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
                 <td>Stop watching after this many attempts.</td>
               </tr>
               <tr>
+                <td><code>matchByName</code><span class="type">boolean</span><span class="since">New in 1.3.0</span></td>
+                <td><code>false</code></td>
+                <td>Fill fields whose <code>name</code> or <code>id</code> matches a parameter with no mapping. See <a href="#match-by-name">Matching by name</a>.</td>
+              </tr>
+              <tr>
+                <td><code>allow</code><span class="type">string[]</span><span class="since">New in 1.3.0</span></td>
+                <td>All</td>
+                <td>Only these parameters may fill fields. <code>*</code> matches any characters, as in <code>utm_*</code>.</td>
+              </tr>
+              <tr>
+                <td><code>prefix</code><span class="type">string</span><span class="since">New in 1.3.0</span></td>
+                <td><code>''</code></td>
+                <td>Only read parameters starting with this, and drop it before matching. <code>'ff_'</code> reads <code>?ff_email=</code> as <code>email</code>.</td>
+              </tr>
+              <tr>
+                <td><code>transform</code><span class="type">Record&lt;string, (value) =&gt; string&gt;</span><span class="since">New in 1.3.0</span></td>
+                <td><code>{}</code></td>
+                <td>Change a parameter’s values before they’re filled.</td>
+              </tr>
+              <tr>
+                <td><code>overwrite</code><span class="type">boolean</span><span class="since">New in 1.3.0</span></td>
+                <td><code>true</code></td>
+                <td>Set to <code>false</code> to leave fields that already have a value alone.</td>
+              </tr>
+              <tr>
+                <td><code>cleanUrl</code><span class="type">boolean</span><span class="since">New in 1.3.0</span></td>
+                <td><code>false</code></td>
+                <td>Remove the parameters that filled a field from the address bar. See <a href="#security">Security</a>.</td>
+              </tr>
+              <tr>
+                <td><code>persist</code><span class="type">string[]</span><span class="since">New in 1.3.0</span></td>
+                <td><code>[]</code></td>
+                <td>Parameters to remember across pages, as in <code>['utm_*']</code>. See <a href="#persist">Keeping values across pages</a>.</td>
+              </tr>
+              <tr>
+                <td><code>persistStorage</code><span class="type">'session' | 'local'</span><span class="since">New in 1.3.0</span></td>
+                <td><code>'session'</code></td>
+                <td>Keep remembered values for this tab only, or across visits.</td>
+              </tr>
+              <tr>
                 <td><code>debug</code><span class="type">boolean</span></td>
                 <td><code>false</code></td>
                 <td>Log each step to the console with an <code>[AutoFormFiller]</code> prefix.</td>
@@ -246,7 +327,8 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
         </div>
         <p>
           In the callbacks, <code>data</code> holds only the parameters that were actually filled, for example
-          <code>{ email: 'ada@example.com', plan: 'team' }</code>.
+          <code>{ email: 'ada@example.com', plan: 'team' }</code>. Checkbox groups and multi-selects list
+          their values separated by commas, as in <code>{ topics: 'code,data' }</code>.
         </p>
       </section>
 
@@ -278,6 +360,59 @@ filler.fillForm('#modal-signup');</code></pre></div>
         <p>
           Stops watching the page and cancels any fill or auto-submit that hasn’t happened yet. After
           this the instance does nothing. Call it when the page or component that owns the form goes away.
+        </p>
+
+        <h3 class="signature"><code>filler.clearPersisted()</code><span class="since">New in 1.3.0</span></h3>
+        <p>Forgets the values saved with <a href="#persist"><code>persist</code></a>, for example after the form is submitted.</p>
+
+        <h3 class="signature"><code>buildPrefillUrl(url, data, options?)</code><span class="since">New in 1.3.0</span></h3>
+        <p>Builds a link with values in it. See <a href="#building-links">Building links</a>.</p>
+      </section>
+
+      <section id="building-links">
+        <h2>Building links<span class="since">New in 1.3.0</span></h2>
+        <p>
+          <code>buildPrefillUrl</code> adds values to a URL with the right encoding, so characters like
+          <code>@</code>, <code>&amp;</code>, <code>+</code> and <code>%</code> come back exactly as written.
+          Use it wherever you make links: an email template, a CRM, or your own server.
+        </p>
+        <div class="code"><pre><code>import { buildPrefillUrl } from '@cnaallotey/auto-form-filler';
+
+buildPrefillUrl('https://example.com/signup?ref=email', {
+  email: 'ada@example.com',
+  plan: 'team',
+  topics: ['code', 'data'],   <span class="tok-c">// repeated: ?topics=code&amp;topics=data</span>
+  seats: 5,
+  coupon: null,               <span class="tok-c">// left out</span>
+});
+<span class="tok-c">// https://example.com/signup?ref=email&amp;email=ada%40example.com&amp;plan=team&amp;topics=code&amp;topics=data&amp;seats=5</span></code></pre></div>
+        <p>
+          It keeps the URL’s existing query string and <code>#hash</code>, and works with relative URLs like
+          <code>/signup</code>. If you use a <code>prefix</code>, pass the same one:
+          <code>buildPrefillUrl(url, data, { prefix: 'ff_' })</code>.
+        </p>
+      </section>
+
+      <section id="persist">
+        <h2>Keeping values across pages<span class="since">New in 1.3.0</span></h2>
+        <p>
+          A visitor often arrives on one page, like <code>/blog?utm_source=newsletter</code>, and signs up on
+          another. List the parameters to keep in <code>persist</code> and run the library on every page.
+          On pages without the form it saves them. On the page with the form it fills them.
+        </p>
+        <div class="code"><pre><code><span class="tok-c">// On every page, for example in your layout</span>
+const filler = autoFillForm({
+  formSelector: '#signup-form',
+  persist: ['utm_*', 'ref'],
+});
+
+<span class="tok-c">// After a successful signup</span>
+filler.clearPersisted();</code></pre></div>
+        <p>
+          Values are kept in <code>sessionStorage</code>, so they last until the tab is closed. Set
+          <code>persistStorage: 'local'</code> to keep them across visits in <code>localStorage</code>.
+          A value in the current URL always wins over a saved one. Parameters not in <code>allow</code>
+          are never saved.
         </p>
       </section>
 
@@ -382,13 +517,16 @@ export function SignupForm() {
             or lead form.
           </li>
           <li>
-            <strong>Don’t map sensitive fields.</strong> Never fill passwords, payment details, or fields
-            that change an account, like email or payout details on a settings page.
+            <strong>Don’t map sensitive fields.</strong> Never fill payment details or fields that change an
+            account, like email or payout details on a settings page. Password and file inputs are never
+            filled. With <code>matchByName</code>, use <code>allow</code> to list exactly which parameters
+            may fill fields.
           </li>
           <li>
             <strong>Keep personal data out of links you publish.</strong> Query strings end up in browser
             history, server logs and analytics. Pre-filling an email is fine in a link sent to that person,
-            not in a public one.
+            not in a public one. Turn on <code>cleanUrl</code> to remove the values from the address bar as
+            soon as they’re filled, so they don’t stay in history or get shared by copying the link.
           </li>
           <li><strong>Validate on the server</strong>, as you would for any form.</li>
         </ul>
@@ -404,7 +542,12 @@ export function SignupForm() {
           </li>
           <li>
             <strong>The parameter has no mapping.</strong> Only parameters in the
-            <a href="#field-mappings">mappings</a> are used. Add one with <code>fieldMappings</code>.
+            <a href="#field-mappings">mappings</a> are used. Add one with <code>fieldMappings</code>, or
+            turn on <code>matchByName</code>.
+          </li>
+          <li>
+            <strong>It’s filtered out.</strong> Check <code>allow</code> and <code>prefix</code>, and with
+            <code>overwrite: false</code>, whether the field already had a value.
           </li>
           <li>
             <strong>The field is outside the target form.</strong> Check <code>formSelector</code>, or
