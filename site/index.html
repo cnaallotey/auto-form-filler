@@ -44,9 +44,9 @@
 
   <main id="main" class="frame">
     <section class="hero" aria-labelledby="hero-title">
-      <a class="announce" href="docs/#late-forms" data-hero>
+      <a class="announce" href="docs/#persist" data-hero>
         <span class="announce-badge">New</span>
-        Fills forms that load after the page
+        1.3 matches fields by name and remembers UTM values
         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
       <h1 id="hero-title" data-hero>Fill any form<br>from its link.</h1>
@@ -156,7 +156,7 @@
           data-query="firstname=Linus&amp;plan=enterprise&amp;newsletter=maybe&amp;ref=hn">Values that don’t fit</button>
         <button class="preset" type="button" data-query="">No values</button>
       </div>
-      <p class="demo-hint" id="demo-hint">Edit the address bar. The real library fills the form as you type.</p>
+      <p class="demo-hint" id="demo-hint">Edit the address bar. The real library fills every field whose name matches, as you type.</p>
     </section>
 
     <section class="runs" aria-label="Where it runs">
@@ -200,26 +200,28 @@
           </article>
 
           <article id="step-map" class="step">
-            <h3>Point it at your form. <span class="muted">Email, name, phone, company and UTM fields are mapped already. Add a selector for anything else.</span></h3>
+            <h3>Point it at your form. <span class="muted">Turn on matchByName and every field whose name matches a parameter is filled. No mappings to write.</span></h3>
             <div class="panel" style="--panel-bg: var(--sand)">
               <div class="panel-card">
                 <div class="code"><pre><code>import { autoFillForm } from '@cnaallotey/auto-form-filler';
 
 autoFillForm({
   formSelector: '#signup-form',
-  fieldMappings: {
-    plan: 'input[name="plan"]',
-    role: 'select[name="role"]',
-  },
+  matchByName: true,
+  allow: ['email', 'plan', 'role', 'utm_*'],  <span class="tok-c">// optional</span>
 });</code></pre></div>
               </div>
             </div>
           </article>
 
           <article id="step-share" class="step">
-            <h3>Share a link. <span class="muted">Whoever opens it sees the form already filled in. They check it and press the button.</span></h3>
+            <h3>Share a link. <span class="muted">Build it with buildPrefillUrl so every value comes back exactly. Whoever opens it sees the form already filled in.</span></h3>
             <div class="panel" style="--panel-bg: var(--sky)">
               <div class="panel-card mini">
+                <div class="code mini-code"><pre><code>buildPrefillUrl('https://example.com/signup', {
+  email: 'ada@example.com',
+  plan: 'team',
+});</code></pre></div>
                 <p class="mini-url"><span>example.com/signup?</span>email=<mark>ada%40example.com</mark>&amp;plan=<mark>team</mark></p>
                 <div class="mini-form" aria-hidden="true">
                   <div class="mini-field"><span>Work email</span><b>ada@example.com</b></div>
@@ -240,7 +242,8 @@ autoFillForm({
 });</code></pre></div>
                 <p class="panel-note">
                   Anyone can write a link to your page, so only auto-submit forms where an unintended
-                  submission is harmless. <a href="docs/#security">Read the security notes</a>.
+                  submission is harmless. Add <code>cleanUrl: true</code> to take personal details out of
+                  the address bar once they’re filled. <a href="docs/#security">Read the security notes</a>.
                 </p>
               </div>
             </div>
@@ -249,9 +252,46 @@ autoFillForm({
       </div>
     </section>
 
+    <section class="split split-reverse" aria-labelledby="persist-title">
+      <div class="split-copy">
+        <p class="eyebrow">New in 1.3</p>
+        <h2 id="persist-title">Campaign values that survive the visit. <span class="muted">Visitors land on one page and sign up on another. persist keeps their UTM values until they reach the form.</span></h2>
+        <ul class="points">
+          <li>
+            <span class="point-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M4 2.5h8v11L8 10.5l-4 3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+            <div><strong>Remembers what you list</strong><p>Run it on every page with <code>persist: ['utm_*']</code>. Matching values are saved for the tab, or across visits with <code>persistStorage: 'local'</code>.</p></div>
+          </li>
+          <li>
+            <span class="point-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M2.5 8h11M9.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div><strong>Fills them on the form page</strong><p>Hidden fields get the saved values. A value in the current link always wins.</p></div>
+          </li>
+          <li>
+            <span class="point-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+            <div><strong>Only what you allow</strong><p>Use <code>allow</code> to list which parameters can fill fields or be saved. Everything else is ignored.</p></div>
+          </li>
+        </ul>
+      </div>
+      <div class="split-visual" style="--panel-bg: var(--mist)">
+        <ol class="journey" aria-label="A visitor's path from a campaign link to the signup form">
+          <li>
+            <span class="journey-url"><span>example.com/blog?</span><mark>utm_source=newsletter</mark>&amp;<mark>utm_campaign=spring</mark></span>
+            <span class="journey-note">Saved <code>utm_source</code> and <code>utm_campaign</code></span>
+          </li>
+          <li>
+            <span class="journey-url"><span>example.com/pricing</span></span>
+            <span class="journey-note">Still remembered</span>
+          </li>
+          <li class="is-done">
+            <span class="journey-url"><span>example.com/signup</span></span>
+            <span class="journey-note">Filled 2 hidden fields: <b>newsletter</b>, <b>spring</b></span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
     <section class="split" aria-labelledby="late-title">
       <div class="split-copy">
-        <p class="eyebrow">New</p>
+        <p class="eyebrow">Single-page apps</p>
         <h2 id="late-title">Forms that load late, handled. <span class="muted">Turn on observeDOM and the library waits for the form, fills it, then stops watching.</span></h2>
         <ul class="points">
           <li>
@@ -298,7 +338,7 @@ autoFillForm({
         <div class="rule">
           <h3>Checkboxes</h3>
           <code>newsletter=yes</code>
-          <p><code>yes</code>, <code>true</code>, <code>on</code> or <code>1</code> checks it. <code>no</code>, <code>false</code>, <code>off</code> or <code>0</code> unchecks it.</p>
+          <p><code>yes</code>, <code>true</code>, <code>on</code> or <code>1</code> checks it. <code>no</code>, <code>false</code>, <code>off</code> or <code>0</code> unchecks it. Repeat the parameter to check several in a group.</p>
         </div>
         <div class="rule">
           <h3>Radio buttons</h3>
@@ -308,7 +348,7 @@ autoFillForm({
         <div class="rule">
           <h3>Selects</h3>
           <code>role=Engineer</code>
-          <p>Picks the option with that value, or that label ignoring case.</p>
+          <p>Picks the option with that value, or that label ignoring case. Repeat the parameter for multi-selects.</p>
         </div>
       </div>
     </section>
