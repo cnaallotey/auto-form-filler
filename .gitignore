@@ -27,3 +27,5 @@ coverage/
 
 # TypeScript cache
 *.tsbuildinfo 
+# Site: library copied in by npm run site:build
+site/auto-form-filler.js

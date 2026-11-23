@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>auto-form-filler docs</title>
+  <meta name="description" content="How to install and configure auto-form-filler: field mappings, options, methods, auto-submit, late-rendered forms and security.">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="docs.css">
+  <script>
+    // Hide animated elements until animations.js runs; show them anyway after 3s.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('motion-pending');
+      setTimeout(function () { document.documentElement.classList.remove('motion-pending'); }, 3000);
+    }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="wordmark" href="../">
+        <span class="wordmark-mark" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 9.5h6.5M11 3.5v7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        auto-form-filler
+      </a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="./" aria-current="page">Docs</a>
+        <a href="../#how">How it works</a>
+        <a href="https://github.com/cnaallotey/auto-form-filler/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/cnaallotey/auto-form-filler">GitHub</a>
+      </nav>
+      <div class="header-actions">
+        <a class="button button-dark button-small" href="#install">Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="frame"><div class="docs">
+    <aside class="toc">
+      <details class="toc-details" open>
+        <summary>On this page</summary>
+        <nav aria-label="On this page" data-scrollspy>
+          <ul>
+            <li><a href="#install">Install</a></li>
+            <li><a href="#quick-start">Quick start</a></li>
+            <li><a href="#how-values-are-filled">How values are filled</a></li>
+            <li><a href="#field-mappings">Field mappings</a></li>
+            <li><a href="#options">Options</a></li>
+            <li><a href="#methods">Methods</a></li>
+            <li><a href="#auto-submit">Auto-submit</a></li>
+            <li><a href="#late-forms">Forms that render late</a></li>
+            <li><a href="#frameworks">React and other frameworks</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#troubleshooting">When nothing is filled</a></li>
+          </ul>
+        </nav>
+      </details>
+    </aside>
+
+    <main class="doc" id="content">
+      <p class="eyebrow" data-hero>Documentation</p>
+      <h1 data-hero>Everything auto-form-filler does. <span class="muted">Install it, map your fields, and decide whether it submits for you.</span></h1>
+      <p class="doc-lede" data-hero>
+        auto-form-filler reads the query string of the current page and fills the fields of a form
+        with it. This page covers every option and method.
+      </p>
+
+      <section id="install">
+        <h2>Install</h2>
+        <p class="icon-line"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg>With npm, or any package manager:</p>
+        <div class="code"><pre><code>npm install @cnaallotey/auto-form-filler</code></pre></div>
+        <p>
+          It ships ES module and CommonJS builds with <span class="icon-link"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"/></svg>TypeScript</span> types, so both
+          <code>import</code> and <code>require</code> work.
+        </p>
+        <p>Or with a script tag, which adds a global <code>AutoFormFiller</code>:</p>
+        <div class="code"><pre><code>&lt;script src="https://unpkg.com/@cnaallotey/auto-form-filler/dist/index.umd.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  AutoFormFiller.autoFillForm({ formSelector: '#signup-form' });
+&lt;/script&gt;</code></pre></div>
+      </section>
+
+      <section id="quick-start">
+        <h2>Quick start</h2>
+        <p>Call <code>autoFillForm</code> on the page that has the form:</p>
+        <div class="code"><pre><code>import { autoFillForm } from '@cnaallotey/auto-form-filler';
+
+autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
+        <p>Then link to the page with values in the query string:</p>
+        <div class="code"><pre><code>https://example.com/signup?email=ada%40example.com&amp;firstname=Ada&amp;company=Acme</code></pre></div>
+        <p>
+          When the page loads, the email, first name and company fields in <code>#signup-form</code>
+          are filled in. Encode values with <code>encodeURIComponent</code> when you build links, so
+          characters like <code>@</code>, <code>&amp;</code> and <code>%</code> survive.
+        </p>
+      </section>
+
+      <section id="how-values-are-filled">
+        <h2>How values are filled</h2>
+        <p>
+          Each query parameter is looked up in the <a href="#field-mappings">field mappings</a>. If it has
+          a mapping, the first matching field <em>inside the target form</em> is filled. Fields outside
+          the form are only used when they’re attached to it with the <code>form</code> attribute.
+          Parameters without a mapping are ignored.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Field</th><th scope="col">What happens</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Text, email, tel, number, textarea and other inputs</td><td>The value is set as written.</td></tr>
+              <tr><td>Checkbox</td><td><code>true</code>, <code>1</code>, <code>yes</code> or <code>on</code> checks it. <code>false</code>, <code>0</code>, <code>no</code> or <code>off</code> unchecks it. Case doesn’t matter. Any other value is skipped.</td></tr>
+              <tr><td>Radio button</td><td>The radio in the same group whose <code>value</code> matches exactly is checked. If none match, it’s skipped.</td></tr>
+              <tr><td>Select</td><td>The option whose <code>value</code> matches exactly, or whose label matches ignoring case, is selected. If none match, it’s skipped.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          After a field is filled, <code>input</code> and <code>change</code> events are fired on it so
+          your own listeners and frameworks see the new value. Skipped fields don’t count as filled
+          and never trigger <a href="#auto-submit">auto-submit</a> on their own.
+        </p>
+        <p>If a parameter appears more than once, the last value is used.</p>
+      </section>
+
+      <section id="field-mappings">
+        <h2>Field mappings</h2>
+        <p>
+          A mapping connects a query parameter to a CSS selector. A selector can list several
+          alternatives separated by commas. They’re tried in order and the first one that finds a
+          field in the form wins.
+        </p>
+        <h3>Built-in mappings</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Parameter</th><th scope="col">Selectors</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>email</code></td><td><code>input[name="email"]</code>, <code>input[type="email"]</code>, <code>#email</code></td></tr>
+              <tr><td><code>name</code></td><td><code>input[name="name"]</code>, <code>input[name="fullname"]</code>, <code>#name</code>, <code>#fullname</code></td></tr>
+              <tr><td><code>firstname</code></td><td><code>input[name="firstname"]</code>, <code>input[name="first_name"]</code>, <code>#firstname</code></td></tr>
+              <tr><td><code>lastname</code></td><td><code>input[name="lastname"]</code>, <code>input[name="last_name"]</code>, <code>#lastname</code></td></tr>
+              <tr><td><code>phone</code></td><td><code>input[name="phone"]</code>, <code>input[type="tel"]</code>, <code>#phone</code></td></tr>
+              <tr><td><code>company</code></td><td><code>input[name="company"]</code>, <code>input[name="organization"]</code>, <code>#company</code></td></tr>
+              <tr><td><code>utm_source</code></td><td><code>input[name="utm_source"]</code>, <code>#utm_source</code></td></tr>
+              <tr><td><code>utm_medium</code></td><td><code>input[name="utm_medium"]</code>, <code>#utm_medium</code></td></tr>
+              <tr><td><code>utm_campaign</code></td><td><code>input[name="utm_campaign"]</code>, <code>#utm_campaign</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Adding your own</h3>
+        <p>
+          Pass <code>fieldMappings</code> to add parameters or replace a built-in one. Your mappings are
+          merged with the built-in ones.
+        </p>
+        <div class="code"><pre><code>autoFillForm({
+  fieldMappings: {
+    plan: 'input[name="plan"]',            <span class="tok-c">// radio group</span>
+    country: 'select[name="country"]',
+    message: 'textarea[name="message"]',
+    email: '#work-email',                  <span class="tok-c">// replaces the built-in email mapping</span>
+  },
+});</code></pre></div>
+      </section>
+
+      <section id="options">
+        <h2>Options</h2>
+        <p>All options are optional.</p>
+        <div class="table-wrap">
+          <table class="options">
+            <thead>
+              <tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>formSelector</code><span class="type">string</span></td>
+                <td><code>'form'</code></td>
+                <td>Selector for the form to fill. The first match is used.</td>
+              </tr>
+              <tr>
+                <td><code>fieldMappings</code><span class="type">Record&lt;string, string&gt;</span></td>
+                <td><code>{}</code></td>
+                <td>Extra or replacement mappings from parameter to selector. See <a href="#field-mappings">Field mappings</a>.</td>
+              </tr>
+              <tr>
+                <td><code>autoSubmit</code><span class="type">boolean</span></td>
+                <td><code>false</code></td>
+                <td>Submit the form after at least one field is filled. Read <a href="#security">Security</a> before turning this on.</td>
+              </tr>
+              <tr>
+                <td><code>submitDelay</code><span class="type">number</span></td>
+                <td><code>1000</code></td>
+                <td>Milliseconds to wait between filling and submitting.</td>
+              </tr>
+              <tr>
+                <td><code>customSubmitFunction</code><span class="type">(form, data) =&gt; void | Promise&lt;void&gt;</span></td>
+                <td>None</td>
+                <td>Called instead of submitting the form natively, for example to send it with <code>fetch</code>.</td>
+              </tr>
+              <tr>
+                <td><code>onBeforeSubmit</code><span class="type">(form, data) =&gt; boolean</span></td>
+                <td>Returns <code>true</code></td>
+                <td>Called before auto-submitting. Return <code>false</code> to cancel.</td>
+              </tr>
+              <tr>
+                <td><code>onAfterSubmit</code><span class="type">(form, data) =&gt; void</span></td>
+                <td>None</td>
+                <td>Called after the form is submitted, or after <code>customSubmitFunction</code> finishes.</td>
+              </tr>
+              <tr>
+                <td><code>onError</code><span class="type">(error: Error) =&gt; void</span></td>
+                <td>Logs to the console</td>
+                <td>Called when filling or submitting fails, or when validation blocks a submission.</td>
+              </tr>
+              <tr>
+                <td><code>observeDOM</code><span class="type">boolean</span><span class="since">New in 1.2.0</span></td>
+                <td><code>false</code></td>
+                <td>Watch the page and try again when the form isn’t there yet. See <a href="#late-forms">Forms that render late</a>.</td>
+              </tr>
+              <tr>
+                <td><code>domObserverTimeout</code><span class="type">number</span><span class="since">New in 1.2.0</span></td>
+                <td><code>10000</code></td>
+                <td>Stop watching after this many milliseconds.</td>
+              </tr>
+              <tr>
+                <td><code>maxDOMObserveRetries</code><span class="type">number</span><span class="since">New in 1.2.0</span></td>
+                <td><code>10</code></td>
+                <td>Stop watching after this many attempts.</td>
+              </tr>
+              <tr>
+                <td><code>debug</code><span class="type">boolean</span></td>
+                <td><code>false</code></td>
+                <td>Log each step to the console with an <code>[AutoFormFiller]</code> prefix.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          In the callbacks, <code>data</code> holds only the parameters that were actually filled, for example
+          <code>{ email: 'ada@example.com', plan: 'team' }</code>.
+        </p>
+      </section>
+
+      <section id="methods">
+        <h2>Methods</h2>
+
+        <h3 class="signature"><code>autoFillForm(config?)</code></h3>
+        <p>
+          Creates a filler and fills the form as soon as the page is ready. Returns the
+          <code>AutoFormFiller</code> instance. It’s the same as <code>AutoFormFiller.init(config)</code>.
+        </p>
+
+        <h3 class="signature"><code>new AutoFormFiller(config?)</code></h3>
+        <p>Creates a filler without filling anything. Use this when you want to decide when to fill.</p>
+        <div class="code"><pre><code>import AutoFormFiller from '@cnaallotey/auto-form-filler';
+
+const filler = new AutoFormFiller({ autoSubmit: false });
+openSignupModal();
+filler.fillForm('#modal-signup');</code></pre></div>
+
+        <h3 class="signature"><code>filler.fillForm(formSelector?)</code></h3>
+        <p>
+          Fills the form matching <code>formSelector</code>, or <code>config.formSelector</code> if you
+          leave it out. Returns <code>true</code> if at least one field was filled. Calling it again
+          before a pending auto-submit runs replaces that submission rather than adding a second one.
+        </p>
+
+        <h3 class="signature"><code>filler.destroy()</code><span class="since">New in 1.2.0</span></h3>
+        <p>
+          Stops watching the page and cancels any fill or auto-submit that hasn’t happened yet. After
+          this the instance does nothing. Call it when the page or component that owns the form goes away.
+        </p>
+      </section>
+
+      <section id="auto-submit">
+        <h2>Auto-submit</h2>
+        <p>With <code>autoSubmit: true</code>, this happens <code>submitDelay</code> milliseconds after a field is filled:</p>
+        <ol class="flow">
+          <li><code>onBeforeSubmit(form, data)</code> runs. If it returns <code>false</code>, nothing else happens.</li>
+          <li>
+            If you set <code>customSubmitFunction</code>, it’s called and the form isn’t submitted natively.
+            When it returns a promise, <code>onAfterSubmit</code> runs once it resolves and <code>onError</code>
+            runs if it rejects.
+          </li>
+          <li>
+            Otherwise the form is submitted with <code>form.requestSubmit()</code>, the same as pressing its
+            submit button. Browser validation runs and your <code>submit</code> handlers fire. If validation
+            stops the submission, <code>onError</code> is called instead of <code>onAfterSubmit</code>.
+            In browsers without <code>requestSubmit</code>, <code>form.submit()</code> is used.
+          </li>
+        </ol>
+        <div class="code"><pre><code>autoFillForm({
+  autoSubmit: true,
+  submitDelay: 1500,
+  onBeforeSubmit: (form) =&gt; form.checkValidity(),
+  customSubmitFunction: async (form) =&gt; {
+    const response = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+    if (!response.ok) throw new Error(`Signup failed: ${response.status}`);
+  },
+  onAfterSubmit: () =&gt; showThanks(),
+  onError: (error) =&gt; showError(error.message),
+});</code></pre></div>
+      </section>
+
+      <section id="late-forms">
+        <h2>Forms that render late</h2>
+        <p>
+          In single-page apps the form often isn’t on the page when your script runs. With
+          <code>observeDOM: true</code>, if the form or its fields aren’t found, the library watches the
+          page for new elements and tries again, waiting half a second after changes settle.
+        </p>
+        <p>It stops watching as soon as any of these happens:</p>
+        <ul>
+          <li>at least one field is filled</li>
+          <li>it has tried <code>maxDOMObserveRetries</code> times</li>
+          <li><code>domObserverTimeout</code> milliseconds have passed</li>
+          <li>you call <code>destroy()</code></li>
+        </ul>
+        <p>It doesn’t watch at all when the URL has no query parameters.</p>
+        <div class="code"><pre><code>autoFillForm({
+  formSelector: '#signup-form',
+  observeDOM: true,
+  domObserverTimeout: 15000,
+  maxDOMObserveRetries: 20,
+});</code></pre></div>
+      </section>
+
+      <section id="frameworks">
+        <h2>React and other frameworks</h2>
+        <ul class="logos logos-inline" aria-label="Frameworks">
+          <li style="--brand: #61DAFB"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z"/></svg>React</li>
+          <li style="--brand: var(--text)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M18.665 21.978C16.758 23.255 14.465 24 12 24 5.377 24 0 18.623 0 12S5.377 0 12 0s12 5.377 12 12c0 3.583-1.574 6.801-4.067 9.001L9.219 7.2H7.2v9.596h1.615V9.251l9.85 12.727Zm-3.332-8.533 1.6 2.061V7.2h-1.6v6.245Z"/></svg>Next.js</li>
+          <li style="--brand: #4FC08D"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M24,1.61H14.06L12,5.16,9.94,1.61H0L12,22.39ZM12,14.08,5.16,2.23H9.59L12,6.41l2.41-4.18h4.43Z"/></svg>Vue</li>
+          <li style="--brand: #FF3E00"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M10.354 21.125a4.44 4.44 0 0 1-4.765-1.767 4.109 4.109 0 0 1-.703-3.107 3.898 3.898 0 0 1 .134-.522l.105-.321.287.21a7.21 7.21 0 0 0 2.186 1.092l.208.063-.02.208a1.253 1.253 0 0 0 .226.83 1.337 1.337 0 0 0 1.435.533 1.231 1.231 0 0 0 .343-.15l5.59-3.562a1.164 1.164 0 0 0 .524-.778 1.242 1.242 0 0 0-.211-.937 1.338 1.338 0 0 0-1.435-.533 1.23 1.23 0 0 0-.343.15l-2.133 1.36a4.078 4.078 0 0 1-1.135.499 4.44 4.44 0 0 1-4.765-1.766 4.108 4.108 0 0 1-.702-3.108 3.855 3.855 0 0 1 1.742-2.582l5.589-3.563a4.072 4.072 0 0 1 1.135-.499 4.44 4.44 0 0 1 4.765 1.767 4.109 4.109 0 0 1 .703 3.107 3.943 3.943 0 0 1-.134.522l-.105.321-.286-.21a7.204 7.204 0 0 0-2.187-1.093l-.208-.063.02-.207a1.255 1.255 0 0 0-.226-.831 1.337 1.337 0 0 0-1.435-.532 1.231 1.231 0 0 0-.343.15L8.62 9.368a1.162 1.162 0 0 0-.524.778 1.24 1.24 0 0 0 .211.937 1.338 1.338 0 0 0 1.435.533 1.235 1.235 0 0 0 .344-.151l2.132-1.36a4.067 4.067 0 0 1 1.135-.498 4.44 4.44 0 0 1 4.765 1.766 4.108 4.108 0 0 1 .702 3.108 3.857 3.857 0 0 1-1.742 2.583l-5.589 3.562a4.072 4.072 0 0 1-1.135.499m10.358-17.95C18.484-.015 14.082-.96 10.9 1.068L5.31 4.63a6.412 6.412 0 0 0-2.896 4.295 6.753 6.753 0 0 0 .666 4.336 6.43 6.43 0 0 0-.96 2.396 6.833 6.833 0 0 0 1.168 5.167c2.229 3.19 6.63 4.135 9.812 2.108l5.59-3.562a6.41 6.41 0 0 0 2.896-4.295 6.756 6.756 0 0 0-.665-4.336 6.429 6.429 0 0 0 .958-2.396 6.831 6.831 0 0 0-1.167-5.168Z"/></svg>Svelte</li>
+          <li style="--brand: var(--text)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M16.712 17.711H7.288l-1.204 2.916L12 24l5.916-3.373-1.204-2.916ZM14.692 0l7.832 16.855.814-12.856L14.692 0ZM9.308 0 .662 3.999l.814 12.856L9.308 0Zm-.405 13.93h6.198L12 6.396 8.903 13.93Z"/></svg>Angular</li>
+        </ul>
+        <p>
+          Values are set the way a browser sets them when someone types, then <code>input</code> and
+          <code>change</code> events are fired. Controlled inputs in React, and bound inputs in Vue,
+          Svelte and similar libraries, update their state from those events.
+        </p>
+        <p>
+          Create the filler after the form is mounted and destroy it when the component unmounts:
+        </p>
+        <div class="code"><pre><code>import { useEffect } from 'react';
+import { autoFillForm } from '@cnaallotey/auto-form-filler';
+
+export function SignupForm() {
+  useEffect(() =&gt; {
+    const filler = autoFillForm({ formSelector: '#signup-form' });
+    return () =&gt; filler.destroy();
+  }, []);
+
+  return &lt;form id="signup-form"&gt;{/* fields */}&lt;/form&gt;;
+}</code></pre></div>
+        <p>
+          If the form appears after data loads, add <code>observeDOM: true</code> instead of
+          waiting for it yourself.
+        </p>
+      </section>
+
+      <section id="security">
+        <h2>Security</h2>
+        <p>
+          Anyone can write a link to your page with any values in it. Treat every pre-filled value as
+          untrusted input, the same as something a visitor typed.
+        </p>
+        <ul>
+          <li>
+            <strong>Be careful with <code>autoSubmit</code>.</strong> Opening a link submits the form from the
+            visitor’s browser, with their cookies and session, using values chosen by whoever wrote
+            the link. Only use it where an unintended submission is harmless, such as a newsletter
+            or lead form.
+          </li>
+          <li>
+            <strong>Don’t map sensitive fields.</strong> Never fill passwords, payment details, or fields
+            that change an account, like email or payout details on a settings page.
+          </li>
+          <li>
+            <strong>Keep personal data out of links you publish.</strong> Query strings end up in browser
+            history, server logs and analytics. Pre-filling an email is fine in a link sent to that person,
+            not in a public one.
+          </li>
+          <li><strong>Validate on the server</strong>, as you would for any form.</li>
+        </ul>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>When nothing is filled</h2>
+        <p>Turn on <code>debug: true</code> and check the console. The usual causes:</p>
+        <ul>
+          <li>
+            <strong>The form isn’t there yet.</strong> The console shows “Form not found”. Use
+            <code>observeDOM: true</code>, or call <code>fillForm()</code> after the form renders.
+          </li>
+          <li>
+            <strong>The parameter has no mapping.</strong> Only parameters in the
+            <a href="#field-mappings">mappings</a> are used. Add one with <code>fieldMappings</code>.
+          </li>
+          <li>
+            <strong>The field is outside the target form.</strong> Check <code>formSelector</code>, or
+            attach the field with <code>form="your-form-id"</code>.
+          </li>
+          <li>
+            <strong>The value doesn’t fit.</strong> Radio and select values must match an option, and
+            checkboxes only take yes/no style values. The console names the value that was skipped.
+          </li>
+        </ul>
+      </section>
+
+      <p class="doc-end">
+        Something missing or wrong? <a class="icon-link" href="https://github.com/cnaallotey/auto-form-filler/issues"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>Open an issue on GitHub</a>.
+        See the <a href="https://github.com/cnaallotey/auto-form-filler/blob/main/CHANGELOG.md">changelog</a> for what changed in each version.
+      </p>
+    </main>
+  </div></div>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>MIT licensed. Made by Charles Nii Adotey Allotey.</span>
+      <nav aria-label="Footer">
+        <a href="../">Home</a>
+        <a href="https://github.com/cnaallotey/auto-form-filler">GitHub</a>
+        <a href="https://www.npmjs.com/package/@cnaallotey/auto-form-filler">npm</a>
+        <a href="https://github.com/cnaallotey/auto-form-filler/blob/main/CHANGELOG.md">Changelog</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="../site.js"></script>
+  <script src="docs.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/motion@14.10.1/dist/motion.js"></script>
+  <script src="../animations.js"></script>
+</body>
+</html>
