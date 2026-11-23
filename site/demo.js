@@ -13,16 +13,12 @@
     'email', 'name', 'firstname', 'lastname', 'phone', 'company',
     'utm_source', 'utm_medium', 'utm_campaign'
   ];
-  const EXTRA_MAPPINGS = {
-    role: 'select[name="role"]',
-    plan: 'input[name="plan"]',
-    newsletter: 'input[name="newsletter"]'
-  };
-  const MAPPED = new Set(DEFAULT_KEYS.concat(Object.keys(EXTRA_MAPPINGS)));
+  const MAPPED = new Set(DEFAULT_KEYS);
 
+  // No mappings needed: matchByName fills any field whose name matches.
   const filler = new lib.AutoFormFiller({
     formSelector: '#demo-form',
-    fieldMappings: EXTRA_MAPPINGS,
+    matchByName: true,
     onError: (error) => console.warn(error)
   });
 
@@ -85,7 +81,7 @@
     params.forEach((p, i) => { lastIndex[p.key] = i; });
     return params.map((p, i) => {
       if (!p.key) return { state: 'none' };
-      if (!MAPPED.has(p.key)) return { state: 'ignored', reason: 'no field is mapped to it' };
+      if (!MAPPED.has(p.key) && !hasField(p.key)) return { state: 'ignored', reason: 'no field has that name' };
       if (lastIndex[p.key] !== i) return { state: 'ignored', reason: 'a later value replaces it' };
       if (changed.has(p.key)) return { state: 'filled' };
       return { state: 'skipped', reason: skipReason(p.key, p.value) };

@@ -1058,3 +1058,102 @@ h2 {
     position: absolute;
   }
 }
+
+/* ---------- 1.3: persist journey ---------- */
+
+@media (min-width: 900px) {
+  .split-reverse .split-copy {
+    order: 2;
+  }
+
+  .split-reverse .split-visual {
+    order: 1;
+    border-left: 0;
+    border-right: 1px solid var(--line);
+  }
+}
+
+.journey {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 24px;
+  bottom: 24px;
+  border-left: 1.5px dashed var(--line-strong);
+}
+
+.journey li {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  margin-left: 44px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.journey li::before {
+  content: "";
+  position: absolute;
+  left: -27px;
+  top: 18px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+}
+
+.journey li.is-done::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.journey-url {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.journey-url > span {
+  color: var(--text-faint);
+}
+
+.journey-url mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+}
+
+.journey-note {
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.journey-note b {
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.journey .is-done {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+}
+
+.mini-code {
+  margin-bottom: 12px;
+  border: 0;
+}

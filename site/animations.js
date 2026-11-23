@@ -122,6 +122,10 @@
     { opacity: [0, 1], x: [-8, 0] },
     { duration: 0.35, delay: stagger(0.22, { startDelay: 0.2 }), ease: 'easeOut' });
 
+  revealGroup('.journey', 'li',
+    { opacity: [0, 1], y: [14, 0] },
+    { duration: 0.5, delay: stagger(0.35, { startDelay: 0.15 }), ease: EASE_OUT });
+
   revealGroup('.rules-grid', '.rule',
     { opacity: [0, 1], y: [20, 0] },
     { duration: 0.6, delay: stagger(0.08), ease: EASE_OUT });

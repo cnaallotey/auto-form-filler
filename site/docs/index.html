@@ -99,9 +99,17 @@ autoFillForm({ formSelector: '#signup-form' });</code></pre></div>
         <div class="code"><pre><code>https://example.com/signup?email=ada%40example.com&amp;firstname=Ada&amp;company=Acme</code></pre></div>
         <p>
           When the page loads, the email, first name and company fields in <code>#signup-form</code>
-          are filled in. Encode values with <code>encodeURIComponent</code> when you build links, so
-          characters like <code>@</code>, <code>&amp;</code> and <code>%</code> survive.
+          are filled in. Build links with <a href="#building-links"><code>buildPrefillUrl</code></a>, or
+          encode values with <code>encodeURIComponent</code>, so characters like <code>@</code>,
+          <code>&amp;</code> and <code>%</code> survive.
         </p>
+        <p>
+          Email, name, phone, company and UTM parameters work out of the box. For any other field, the
+          simplest setup is <a href="#match-by-name"><code>matchByName</code></a>: each parameter fills
+          the field with the same <code>name</code>.
+        </p>
+        <div class="code"><pre><code><span class="tok-c">// ?plan=team&amp;seats=5 fills &lt;input name="plan"&gt; and &lt;input name="seats"&gt;</span>
+autoFillForm({ formSelector: '#signup-form', matchByName: true });</code></pre></div>
       </section>
 
       <section id="how-values-are-filled">
